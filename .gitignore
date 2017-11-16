@@ -1,3 +1,5 @@
 go_web_oreilly/chat/*.json
 .idea/
 chat
+avatars/*
+
