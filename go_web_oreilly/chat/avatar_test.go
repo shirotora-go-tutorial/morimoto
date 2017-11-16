@@ -1,6 +1,9 @@
 package main
 import (
 	"testing"
+	"path/filepath"
+	"io/ioutil"
+	"os"
 )
 
 func TestAutuAvatar(t *testing.T){
@@ -38,3 +41,21 @@ func TestGravatarAvatar(t *testing.T){
 	}
 }
 
+func TestFileSystemAvatar(t *testing.T){
+	filename := filepath.Join("avatars", "abc.jpg")
+	ioutil.WriteFile(filename, []byte{}, 0777)
+	defer func() {
+		os.Remove(filename)
+	}()
+
+	var fileSystemAvatar FileSystemAvatar
+	client := new(client)
+	client.userData = map[string]interface{}{"userid" : "abc"}
+	url, err := fileSystemAvatar.GetAvatarURL(client)
+	if err != nil{
+		t.Error("FileSystemAvatar.GetAavtarURL should return error")
+	}
+	if url != "/avatars/abc.jpg" {
+		t.Error("FileSystemAvatar.GetAvatarURL return %s that is incoreect", url)
+	}
+}
