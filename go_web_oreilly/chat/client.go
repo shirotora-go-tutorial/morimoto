@@ -1,30 +1,26 @@
 package main
 
-import(
+import (
 	websocket "github.com/gorilla/websocket"
 	"time"
-	"log"
 )
 
 type client struct {
-	socket * websocket.Conn
+	socket *websocket.Conn
 	//send chan []byte
-	send chan *message
-	room *room
+	send     chan *message
+	room     *room
 	userData map[string]interface{}
 }
 
-func (c *client) read(){
+func (c *client) read() {
 	for {
 		var msg *message
 		if err := c.socket.ReadJSON(&msg); err == nil {
 			msg.When = time.Now()
 			msg.Name = c.userData["name"].(string)
-			//if avatarURL, ok := c.userData["avatar_url"]; ok {
-			//	msg.AvatarURL = avatarURL.(string)
-			//}
-			msg.AvatarURL, err = c.room.avatar.GetAvatarURL(c); if  err != nil{
-				log.Fatal("error", err)
+			if avatarURL, ok := c.userData["avatar_url"]; ok {
+				msg.AvatarURL = avatarURL.(string)
 			}
 			c.room.forward <- msg
 		} else {

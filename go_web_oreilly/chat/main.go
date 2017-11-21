@@ -1,54 +1,58 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"text/template"
-	"path/filepath"
-	"sync"
-	"flag"
 	"../trace"
-	"os"
 	"encoding/json"
-	"io/ioutil"
+	"flag"
 	"github.com/stretchr/gomniauth"
-	//"github.com/stretchr/gomniauth/providers/facebook"
-	//"github.com/stretchr/gomniauth/providers/github"
 	"github.com/stretchr/gomniauth/providers/google"
 	"github.com/stretchr/objx"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sync"
+	"text/template"
 )
 
-type templateHandler struct {
-	once sync.Once
-	filename string
-	templ *template.Template
+var avatars Avatar = TryAvatars{
+	UseFileSystemAvatar,
+	UseAuthAvatar,
+	UseGravatar,
 }
 
-func(t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request){
-	t.once.Do(func(){
+type templateHandler struct {
+	once     sync.Once
+	filename string
+	templ    *template.Template
+}
+
+func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.once.Do(func() {
 		t.templ = template.Must(
 			template.ParseFiles(filepath.Join(
 				"templates",
 				t.filename,
-		)))
+			)))
 	})
 	data := map[string]interface{}{
 		"Host": r.Host,
 	}
-	if authCookie, err := r.Cookie("auth"); err == nil{
+	if authCookie, err := r.Cookie("auth"); err == nil {
 		data["UserData"] = objx.MustFromBase64(authCookie.Value)
 	}
 	t.templ.Execute(w, data)
 }
 
 type Authkey struct {
-	Key string `json:"key"`
-	Clientid string `json:"clientid"`
+	Key          string `json:"key"`
+	Clientid     string `json:"clientid"`
 	Clientsecret string `json:"clientsecret"`
-	Redirecturl string `json:"redirecturl"`
+	Redirecturl  string `json:"redirecturl"`
 }
 
-func main(){
+func main() {
 	var addr = flag.String("addr", ":8080", "アドレス")
 	flag.Parse()
 
@@ -59,7 +63,7 @@ func main(){
 
 	var authkey []Authkey
 	err = json.Unmarshal(keyfile, &authkey)
-	if err != nil{
+	if err != nil {
 		log.Fatal("Format Error: ", err)
 	}
 
@@ -76,21 +80,21 @@ func main(){
 	//r := newRoom(UseGravatar)
 	r := newRoom(UseFileSystemAvatar)
 	r.tracer = trace.New(os.Stdout)
-	http.Handle("/", MustAuth(&templateHandler{ filename: "./chat.html"}))
+	http.Handle("/", MustAuth(&templateHandler{filename: "./chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
 	http.HandleFunc("/auth/", loginHandler)
 	http.Handle("/room", r)
-	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request){
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
-			Name: "auth",
-			Value: "",
-			Path: "/",
+			Name:   "auth",
+			Value:  "",
+			Path:   "/",
 			MaxAge: -1,
 		})
 		w.Header()["Location"] = []string{"/chat"}
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
-	http.Handle("/upload", &templateHandler{filename:"upload.html"})
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
 	http.HandleFunc("/uploader", uploaderHandle)
 	http.Handle("/avatars/",
 		http.StripPrefix("/avatars/",
@@ -99,7 +103,7 @@ func main(){
 	go r.run()
 
 	log.Println("Start Web  server Port:", *addr)
-	if err := http.ListenAndServe(*addr, nil); err != nil{
+	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServer", err)
 	}
 }

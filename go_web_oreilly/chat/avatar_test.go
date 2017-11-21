@@ -1,10 +1,11 @@
 package main
+
 import (
-	"testing"
-	"path/filepath"
+	gomniaututest "github.com/stretchr/gomniauth/test"
 	"io/ioutil"
 	"os"
-	gomniaututest "github.com/stretchr/gomniauth/test"
+	"path/filepath"
+	"testing"
 )
 
 func TestAuthAvatar(t *testing.T) {
@@ -30,21 +31,19 @@ func TestAuthAvatar(t *testing.T) {
 	}
 }
 
-
-func TestGravatarAvatar(t *testing.T){
+func TestGravatarAvatar(t *testing.T) {
 	var gravatarAvatar GravatarAvatar
 	user := &chatUser{uniqueID: "abc"}
 	url, err := gravatarAvatar.GetAvatarURL(user)
 	if err != nil {
 		t.Error("GravatarAvatar should not return error")
 	}
-	//if url != "//www.gravatar.com/avatar/0bc83cb571cd1c50ba6f3e8a78ef1346" {
-	if url != "//www.gravatar.com/avatar/0bc83cb571cd1c50ba6f3e8a78f134" {
+	if url != "//www.gravatar.com/avatar/abc" {
 		t.Errorf("GravatarAvatar.GetAvatar return missed value %s", url)
 	}
 }
 
-func TestFileSystemAvatar(t *testing.T){
+func TestFileSystemAvatar(t *testing.T) {
 	filename := filepath.Join("avatars", "abc.jpg")
 	ioutil.WriteFile(filename, []byte{}, 0777)
 	defer func() {
@@ -53,8 +52,8 @@ func TestFileSystemAvatar(t *testing.T){
 
 	var fileSystemAvatar FileSystemAvatar
 	user := &chatUser{uniqueID: "abc"}
-	url, err := gravatarAvatar.GetAvatarURL(user)
-	if err != nil{
+	url, err := fileSystemAvatar.GetAvatarURL(user)
+	if err != nil {
 		t.Error("FileSystemAvatar.GetAavtarURL should return error")
 	}
 	if url != "/avatars/abc.jpg" {

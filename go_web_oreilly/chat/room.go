@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
-	"net/http"
-	"log"
 	"../trace"
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/objx"
+	"log"
+	"net/http"
 )
 
 type room struct {
@@ -15,22 +15,20 @@ type room struct {
 	leave   chan *client
 	clients map[*client]bool
 	tracer  trace.Tracer
-	avatar Avatar
+	avatar  Avatar
 }
 
 func newRoom(avatar Avatar) *room {
 	return &room{
-		//forward: make(chan []byte),
 		forward: make(chan *message),
-		join: make(chan *client),
-		leave: make(chan *client),
+		join:    make(chan *client),
+		leave:   make(chan *client),
 		clients: make(map[*client]bool),
-		tracer: trace.Off(),
-		avatar: avatar,
+		tracer:  trace.Off(),
 	}
 }
 
-func (r *room) run(){
+func (r *room) run() {
 	for {
 		select {
 		case client := <-r.join:
@@ -58,13 +56,13 @@ func (r *room) run(){
 }
 
 const (
-	socketBufferSize = 1024
+	socketBufferSize  = 1024
 	messageBufferSize = 256
 )
 
-var upgrader = &websocket.Upgrader{ReadBufferSize:socketBufferSize, WriteBufferSize: socketBufferSize}
+var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
 
-func (r *room) ServeHTTP (w http.ResponseWriter, req *http.Request){
+func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	socket, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Fatal("ServeHTTP", err)
@@ -72,21 +70,21 @@ func (r *room) ServeHTTP (w http.ResponseWriter, req *http.Request){
 	}
 
 	authCookie, err := req.Cookie("auth")
-	if err != nil{
+	if err != nil {
 		log.Fatal("failed to get cookie", err)
 		return
 	}
 
-	client := &client {
+	client := &client{
 		socket: socket,
 		//send: make(chan []byte, messageBufferSize),
-		send: make(chan *message, messageBufferSize),
-		room: r,
+		send:     make(chan *message, messageBufferSize),
+		room:     r,
 		userData: objx.MustFromBase64(authCookie.Value),
 	}
 
 	r.join <- client
-	defer func(){
+	defer func() {
 		r.leave <- client
 	}()
 	go client.write()

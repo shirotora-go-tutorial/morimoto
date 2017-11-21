@@ -1,13 +1,13 @@
 package main
 
 import (
-	"net/http"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 )
 
-func uploaderHandle(w http.ResponseWriter, req *http.Request){
+func uploaderHandle(w http.ResponseWriter, req *http.Request) {
 	userId := req.FormValue("userid")
 	file, header, err := req.FormFile("avatarFile")
 	if err != nil {
@@ -20,7 +20,7 @@ func uploaderHandle(w http.ResponseWriter, req *http.Request){
 		io.WriteString(w, err.Error())
 		return
 	}
-	filename := filepath.Join("avatars", userId + filepath.Ext(header.Filename))
+	filename := filepath.Join("avatars", userId+filepath.Ext(header.Filename))
 	err = ioutil.WriteFile(filename, data, 0600)
 	if err != nil {
 		io.WriteString(w, err.Error())
