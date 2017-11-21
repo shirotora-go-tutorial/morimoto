@@ -14,24 +14,18 @@ type Avatar interface {
 
 type AuthAvatar struct{}
 var UseAuthAvatar AuthAvatar
-func (_ AuthAvatar) GetAvatarURL(c *client) (string, error){
-	if url, ok := c.userData["avatar_url"]; ok {
-		if urlStr, ok := url.(string); ok {
-			return urlStr, nil
-		}
+func (_ AuthAvatar) GetAvatarURL(u ChatUser) (string, error){
+	url := u.AvatarURL()
+	if url != ""{
+		return url, nil
 	}
 	return "", ErrNoAvatarURL
 }
 
 type GravatarAvatar struct {}
 var UseGravatar GravatarAvatar
-func (_ GravatarAvatar) GetAvatarURL(c *client) (string, error){
-	if userid, ok := c.userData["userid"]; ok {
-		if useridStr, ok := userid.(string); ok {
-			return "//www.gravatar.com/avatar/" + useridStr, nil
-		}
-	}
-	return "", ErrNoAvatarURL
+func (_ GravatarAvatar) GetAvatarURL(u ChatUser) (string, error){
+	return "//www.gravatar.com/avatar/" + u.UniqueID(), nil
 }
 
 type FileSystemAvatar struct{}
@@ -39,7 +33,7 @@ var UseFileSystemAvatar FileSystemAvatar
 func (_ FileSystemAvatar) GetAvatarURL(c *client)(string, error){
 	if userid, ok := c.userData["userid"]; ok {
 		if useridStr, ok := userid.(string); ok{
-			if files, err := ioutil.ReadDir(); err == nil{
+			if files, err := ioutil.ReadDir("avatars"); err == nil{
 				for _, file := range files{
 					if file.IsDir(){
 						continue

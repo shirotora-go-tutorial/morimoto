@@ -10,7 +10,6 @@ import (
 	"crypto/md5"
 	"io"
 	gomniauthcommn "github.com/stretchr/gomniauth/common"
-	"expvar"
 )
 
 type ChatUser interface {
